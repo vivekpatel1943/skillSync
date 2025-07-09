@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  //output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  username String
+  email String @unique
+  password String
+
+  // one-to-one relationship with the Resume model
+  resume Resume?
+
+}
+
+model Resume{ 
+  id Int @id @default(autoincrement())
+  jobExperience String
+  // this will be a one-to-many relation as a user can have multiple skills but a skill with an id can be only be connected to one user
+  skills Skill[]
+  proof_of_work  Json
+
+  userId Int @unique
+  user User @relation(fields: [userId],references: [id])
+} 
+
+model Skill {
+  id Int @id @default(autoincrement())
+  skill String
+  level String
+  experience String
+
+  resumeId Int @unique
+  resume Resume @relation(fields: [resumeId] , references: [id])
+}
+
+model Employer{
+  id Int @id @default(autoincrement())
+  username String
+  email String @unique
+  name_of_organization String
+  
+  //credentials to prove the association of the person with the organization that he claims to be hiring for
+  credentials String
+  allow_dm Boolean @default(true)
+}
+
