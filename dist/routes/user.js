@@ -32,11 +32,26 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importStar(require("express"));
 const user_1 = require("../controllers/user");
+const userAuthMiddleware_1 = __importDefault(require("../middlewares/userAuthMiddleware"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const router = (0, express_1.Router)();
 // middlewares
 router.use(express_1.default.json());
+router.use((0, cookie_parser_1.default)());
 router.post('/userSignup', user_1.userSignup);
+router.post('/userSignin', user_1.userSignin);
+router.get('/getAllUsers', user_1.getAllUsers);
+router.get('/profile', userAuthMiddleware_1.default, user_1.profile);
+router.post('/resume', userAuthMiddleware_1.default, user_1.resume);
+router.post('/resumeUpdate', userAuthMiddleware_1.default, user_1.resumeUpdate);
+router.post('/userUpdate', userAuthMiddleware_1.default, user_1.userUpdate);
+router.delete('/resumeDelete', userAuthMiddleware_1.default, user_1.resumeDelete);
+router.delete('/skillDelete', userAuthMiddleware_1.default, user_1.skillDelete);
+router.post('/forgotPassword', user_1.forgotPassword);
 exports.default = router;

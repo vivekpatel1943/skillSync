@@ -12,32 +12,28 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
+exports.sendEmail = void 0;
+const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const user_1 = __importDefault(require("./routes/user"));
-const cookie_parser_1 = __importDefault(require("cookie-parser"));
-const prisma_1 = require("./utils/prisma");
-// configuring all the environment variables
+// configuring the environment variables
 dotenv_1.default.config();
-const app = (0, express_1.default)();
-// middlewares
-app.use('/api/v1', user_1.default);
-// the following middleware makes json available as javascript objects, 
-app.use(express_1.default.json());
-app.use((0, cookie_parser_1.default)());
-function main() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            yield prisma_1.prisma.$connect();
-            console.log("connected to the database successfully..");
-        }
-        catch (err) {
-            console.error(err);
+const sendEmail = (to, subject, text, html) => __awaiter(void 0, void 0, void 0, function* () {
+    // create transporter
+    const transporter = nodemailer_1.default.createTransport({
+        service: "gmail", //Or use 'host' , 'port' etc. for custom SMTP
+        auth: {
+            user: process.env.EMAIL_USER, //your email address
+            pass: process.env.EMAIL_PASS // App password (for gmail , use an app password)
         }
     });
-}
-main();
-const port = 5000;
-app.listen(port, () => {
-    console.log(`your server is running on port ${port}.`);
+    // sendEmail 
+    const info = yield transporter.sendMail({
+        from: `SkillSync <${process.env.EMAIL_USER}>`,
+        to,
+        subject,
+        text,
+        html
+    });
+    console.log("Message sent %s", info.messageId);
 });
+exports.sendEmail = sendEmail;

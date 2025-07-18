@@ -22,14 +22,14 @@ model User {
 
   // one-to-one relationship with the Resume model
   resume Resume?
-
 }
 
 model Resume{ 
   id Int @id @default(autoincrement())
-  jobExperience String
+  jobExperience Json?
   // this will be a one-to-many relation as a user can have multiple skills but a skill with an id can be only be connected to one user
   skills Skill[]
+  // these will simply be the links to the works of the users 
   proof_of_work  Json
 
   userId Int @unique
@@ -39,10 +39,10 @@ model Resume{
 model Skill {
   id Int @id @default(autoincrement())
   skill String
-  level String
-  experience String
+  level String?
+  yearsOfExperience Float
 
-  resumeId Int @unique
+  resumeId Int 
   resume Resume @relation(fields: [resumeId] , references: [id])
 }
 
