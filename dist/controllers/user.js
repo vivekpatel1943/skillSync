@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.forgotPassword = exports.userUpdate = exports.skillDelete = exports.resumeDelete = exports.resumeUpdate = exports.resume = exports.profile = exports.getAllUsers = exports.userSignin = exports.userSignup = void 0;
+exports.verifyOTP = exports.forgotPassword = exports.userUpdate = exports.skillDelete = exports.resumeDelete = exports.resumeUpdate = exports.resume = exports.profile = exports.getAllUsers = exports.userSignin = exports.userSignup = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 const prisma_js_1 = require("../utils/prisma.js");
 const types_js_1 = require("../types/types.js");
@@ -20,6 +20,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const express_1 = __importDefault(require("express"));
 const emailService_js_1 = require("../emailService.js");
+const redisClient_js_1 = require("../redisClient.js");
 const app = (0, express_1.default)();
 // configuring environment variables
 dotenv_1.default.config();
@@ -353,10 +354,19 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
             return res.status(400).json({ msg: "invalid input.." });
         }
         const { email } = parsedPayload.data;
-        const otp = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+        const user = yield prisma_js_1.prisma.user.findUnique({
+            where: {
+                email: email
+            }
+        });
+        if (!user) {
+            return res.status(404).json({ msg: "user with the email does not exist..." });
+        }
+        const storedOTP = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+        yield redisClient_js_1.redisClient.set(`otp`, storedOTP, { EX: 300 }); //300s = 5 mins
         //  with nodemailer we will send the above random number to the user's email as otp
-        (0, emailService_js_1.sendEmail)(`${email}`, "email verification", `your email verification code is ${otp}, if this isn't you please report at @skillSyncReportForum`, `<div>
-                <p><strong>your email verification otp is ${otp}</strong></p>,
+        (0, emailService_js_1.sendEmail)(`${email}`, "email verification", `your email verification code is ${storedOTP}, if this isn't you please report at @skillSyncReportForum`, `<div>
+                <p><strong>your email verification otp is ${storedOTP}</strong></p>,
                 <p><b>we have received a request to change your account's password , if this is not you please report at @skillSyncReportForum</b></p>
             </div>`);
         return res.status(200).json({ msg: "otp sent to the user's email successfully..." });
@@ -367,3 +377,27 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.forgotPassword = forgotPassword;
+const verifyOTP = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const parsedPayload = types_js_1.otpInput.safeParse(req.body);
+        if (!parsedPayload.success) {
+            return res.status(400).json({ msg: "invalid input" });
+        }
+        const { otp } = parsedPayload.data;
+        const storedOTP = yield redisClient_js_1.redisClient.get(`otp`);
+        if (!storedOTP) {
+            return res.status(400).json({ msg: "OTP expired or not found.." });
+        }
+        if (parseInt(storedOTP) !== otp) {
+            return res.status(400).json({ msg: "invalid otp" });
+        }
+        // valid OTP ; delete it after use
+        yield redisClient_js_1.redisClient.del('otp');
+        return res.status(200).json({ msg: "OTP verified successfully..." });
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ msg: "internal server error..." });
+    }
+});
+exports.verifyOTP = verifyOTP;

@@ -1,5 +1,5 @@
 import express,{Router} from 'express';
-import { userSignup,userSignin, getAllUsers,profile,resume,resumeUpdate,userUpdate,resumeDelete,skillDelete,forgotPassword} from '../controllers/user'; 
+import { userSignup,userSignin, getAllUsers,profile,resume,resumeUpdate,userUpdate,resumeDelete,skillDelete,forgotPassword,verifyOTP} from '../controllers/user'; 
 import userAuthMiddleware from '../middlewares/userAuthMiddleware';
 import cookieParser from 'cookie-parser';
 
@@ -20,5 +20,6 @@ router.delete('/resumeDelete',userAuthMiddleware,resumeDelete);
 router.delete('/skillDelete',userAuthMiddleware,skillDelete);
 
 router.post('/forgotPassword',forgotPassword)
+router.post('/verifyOTP',verifyOTP)
 
 export default router;

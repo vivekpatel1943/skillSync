@@ -54,4 +54,5 @@ router.post('/userUpdate', userAuthMiddleware_1.default, user_1.userUpdate);
 router.delete('/resumeDelete', userAuthMiddleware_1.default, user_1.resumeDelete);
 router.delete('/skillDelete', userAuthMiddleware_1.default, user_1.skillDelete);
 router.post('/forgotPassword', user_1.forgotPassword);
+router.post('/verifyOTP', user_1.verifyOTP);
 exports.default = router;

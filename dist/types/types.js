@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.forgotPasswordInput = exports.userUpdateInput = exports.resumeUpdateInput = exports.resumeInput = exports.userSigninInput = exports.userSignupInput = void 0;
+exports.otpInput = exports.forgotPasswordInput = exports.userUpdateInput = exports.resumeUpdateInput = exports.resumeInput = exports.userSigninInput = exports.userSignupInput = void 0;
 const zod_1 = __importDefault(require("zod"));
 exports.userSignupInput = zod_1.default.object({
     username: zod_1.default.string().trim().min(5, { message: "required" }),
@@ -31,4 +31,7 @@ exports.userUpdateInput = zod_1.default.object({
 });
 exports.forgotPasswordInput = zod_1.default.object({
     email: zod_1.default.string().email()
+});
+exports.otpInput = zod_1.default.object({
+    otp: zod_1.default.number()
 });

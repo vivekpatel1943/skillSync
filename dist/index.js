@@ -17,6 +17,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const user_1 = __importDefault(require("./routes/user"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const prisma_1 = require("./utils/prisma");
+const redisClient_1 = require("./redisClient");
 // configuring all the environment variables
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -25,7 +26,7 @@ app.use('/api/v1', user_1.default);
 // the following middleware makes json available as javascript objects, 
 app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
-function main() {
+function databaseConnect() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield prisma_1.prisma.$connect();
@@ -36,7 +37,19 @@ function main() {
         }
     });
 }
-main();
+databaseConnect();
+function redisConnect() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield redisClient_1.redisClient.connect();
+            console.log("redis connection successfull...");
+        }
+        catch (err) {
+            console.error("redis client error", err);
+        }
+    });
+}
+redisConnect();
 const port = 5000;
 app.listen(port, () => {
     console.log(`your server is running on port ${port}.`);

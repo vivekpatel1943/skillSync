@@ -35,3 +35,8 @@ export const userUpdateInput = zod.object({
 export const forgotPasswordInput = zod.object({
     email : zod.string().email()
 })
+
+
+export const otpInput = zod.object({
+    otp : zod.number()
+})

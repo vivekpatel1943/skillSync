@@ -1,12 +1,12 @@
 import dotenv from 'dotenv';
 import { prisma } from '../utils/prisma.js';
 import { Request, Response } from 'express';
-import { userSignupInput, userSigninInput, resumeInput, resumeUpdateInput, userUpdateInput, forgotPasswordInput } from '../types/types.js';
+import { userSignupInput, userSigninInput, resumeInput, resumeUpdateInput, userUpdateInput, forgotPasswordInput,otpInput } from '../types/types.js';
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import express from 'express';
-
 import { sendEmail } from '../emailService.js'
+import {redisClient} from '../redisClient.js'; 
 
 const app = express();
 
@@ -422,14 +422,26 @@ export const forgotPassword = async (req: Request, res: Response): Promise<any> 
 
         const { email } = parsedPayload.data;
 
-        const otp = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+        const user = await prisma.user.findUnique({
+            where : {
+                email : email
+            }
+        })
+
+        if(!user){
+            return res.status(404).json({msg:"user with the email does not exist..."})
+        }
+
+        const storedOTP = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+        await redisClient.set(`otp`,storedOTP,{EX:300}); //300s = 5 mins
+
         //  with nodemailer we will send the above random number to the user's email as otp
         sendEmail(
             `${email}`,
             "email verification",
-            `your email verification code is ${otp}, if this isn't you please report at @skillSyncReportForum`,
+            `your email verification code is ${storedOTP}, if this isn't you please report at @skillSyncReportForum`,
             `<div>
-                <p><strong>your email verification otp is ${otp}</strong></p>,
+                <p><strong>your email verification otp is ${storedOTP}</strong></p>,
                 <p><b>we have received a request to change your account's password , if this is not you please report at @skillSyncReportForum</b></p>
             </div>`
         )
@@ -440,3 +452,34 @@ export const forgotPassword = async (req: Request, res: Response): Promise<any> 
         res.status(500).json({ msg: "internal server error..." })
     }
 }
+
+export const verifyOTP = async (req:Request,res:Response) : Promise<any> => {
+    try {
+        const parsedPayload = otpInput.safeParse(req.body);
+
+        if(!parsedPayload.success){
+            return res.status(400).json({msg:"invalid input"})
+        }
+
+        const {otp} = parsedPayload.data;
+
+
+        const storedOTP = await redisClient.get(`otp`);
+
+        if(!storedOTP){
+            return res.status(400).json({msg:"OTP expired or not found.."})
+        }
+
+        if(parseInt(storedOTP) !== otp){
+            return res.status(400).json({msg:"invalid otp"})
+        }
+
+        // valid OTP ; delete it after use
+        await redisClient.del('otp');
+
+        return res.status(200).json({msg:"OTP verified successfully..."})
+    }catch(err){
+        console.error(err);
+        res.status(500).json({msg:"internal server error..."})
+    }
+} 

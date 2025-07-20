@@ -3,6 +3,8 @@ import dotenv from 'dotenv';
 import router from './routes/user'
 import cookieParser from 'cookie-parser';
 import {prisma} from './utils/prisma';
+import {redisClient} from './redisClient';
+
 // configuring all the environment variables
 dotenv.config();
 
@@ -14,7 +16,7 @@ app.use('/api/v1',router)
 app.use(express.json());
 app.use(cookieParser());
 
-async function main(){
+async function databaseConnect(){
     try{
         await prisma.$connect();
         console.log("connected to the database successfully..")
@@ -23,7 +25,18 @@ async function main(){
     }
 }
 
-main();
+databaseConnect();
+
+async function redisConnect(){
+    try{
+        await redisClient.connect();
+        console.log("redis connection successfull...")
+    }catch(err){
+        console.error("redis client error",err)
+    }
+}
+
+redisConnect();
 
 const port = 5000;
 
