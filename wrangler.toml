@@ -1,3 +1,4 @@
 name = "skillsync02"
 main = "src/index.ts"
 compatibility_date = "2025-07-20"
+node_compat = true
