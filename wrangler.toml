@@ -3,5 +3,5 @@ main = "dist/index.js"
 type="node"
 
 compatibility_date = "2025-07-21"
-compatibility_flags = ["nodejs_compat_populate_process_env"]
+compatibility_flags = [nodejs_compat,"nodejs_compat_populate_process_env"]
 
